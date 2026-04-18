@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\CheckoutController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,7 +17,7 @@ Route::get('/', function () {
 });
 
 // Public product routes - no login needed
-Route::get('/products', [ProductController::class, 'index']) 
+Route::get('/products', [ProductController::class, 'index'])
     ->name('products.index');
 Route::get('/products/{product}', [ProductController::class, 'show'])
     ->name('products.show');
@@ -45,6 +46,14 @@ Route::middleware('auth')->group(function () {
         ->name('cart.remove');
     Route::delete('/cart/clear', [CartController::class, 'clear'])
         ->name('cart.clear');
+
+    // Checkout routes
+    Route::get('/checkout', [CheckoutController::class, 'index'])
+        ->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store'])
+        ->name('checkout.store');
+    Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])
+        ->name('checkout.success');
 
     // Order history routes
     Route::get('/orders', [OrderController::class, 'index'])

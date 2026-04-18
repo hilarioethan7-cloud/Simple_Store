@@ -1,49 +1,57 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
-@section('title', 'Orders')
+@section('title', 'My Orders - Simple Store')
 
 @section('content')
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-gray-800">Orders</h2>
+<div class="space-y-6">
+
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-800">My Orders</h1>
+        <span class="text-sm text-gray-400">{{ $orders->total() }} orders found</span>
     </div>
 
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Order ID</th>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Customer</th>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Total</th>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Status</th>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Date</th>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @foreach($orders as $order)
-                    <tr>
-                        <td class="px-6 py-4">#{{ $order->id }}</td>
-                        <td class="px-6 py-4">{{ $order->user->name }}</td>
-                        <td class="px-6 py-4">${{ number_format($order->total_amount, 2) }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-2 py-1 rounded-full text-xs font-medium
-                                {{ $order->status === 'delivered' ? 'bg-green-100 text-green-700' : '' }}
-                                {{ $order->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}
-                                {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                                {{ $order->status === 'processing' ? 'bg-blue-100 text-blue-700' : '' }}
-                                {{ $order->status === 'shipped' ? 'bg-purple-100 text-purple-700' : '' }}">
+    @if($orders->isEmpty())
+        <div class="text-center py-20 text-gray-400">
+            <p class="text-sm">You have no orders yet.</p>
+            <a href="{{ route('products.index') }}"
+               class="inline-block mt-4 bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                Start Shopping
+            </a>
+        </div>
+    @else
+        <div class="space-y-4">
+            @foreach($orders as $order)
+                <a href="{{ route('orders.show', $order) }}"
+                   class="block bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-shadow duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-1">
+                            <p class="text-sm font-semibold text-gray-800">Order #{{ $order->id }}</p>
+                            <p class="text-xs text-gray-400">{{ $order->created_at->format('F j, Y') }}</p>
+                            <p class="text-xs text-gray-500">{{ $order->orderItems->count() }} item(s)</p>
+                        </div>
+                        <div class="text-right space-y-2">
+                            <p class="text-sm font-bold text-gray-900">₱{{ number_format($order->total_amount, 2) }}</p>
+                            <span @class([
+                                'text-xs font-medium px-2 py-1 rounded-full',
+                                'bg-yellow-100 text-yellow-700' => $order->status === 'pending',
+                                'bg-blue-100 text-blue-700'    => $order->status === 'processing',
+                                'bg-green-100 text-green-700'  => $order->status === 'completed',
+                                'bg-red-100 text-red-700'      => $order->status === 'cancelled',
+                            ])>
                                 {{ ucfirst($order->status) }}
                             </span>
-                        </td>
-                        <td class="px-6 py-4 text-gray-500">{{ $order->created_at->format('M d, Y') }}</td>
-                        <td class="px-6 py-4">
-                            <a href="{{ route('admin.orders.show', $order) }}"
-                               class="text-blue-600 hover:underline">View</a>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-        <div class="p-4">{{ $orders->links() }}</div>
-    </div>
+                        </div>
+                    </div>
+                </a>
+            @endforeach
+        </div>
+
+        @if($orders->hasPages())
+            <div class="pt-4">
+                {{ $orders->withQueryString()->links() }}
+            </div>
+        @endif
+    @endif
+
+</div>
 @endsection
