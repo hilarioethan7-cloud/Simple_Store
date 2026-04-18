@@ -19,7 +19,9 @@
         {{-- Product Image --}}
         <div class="aspect-square bg-gray-50 rounded-xl overflow-hidden">
             @if($product->image)
-                <img src="{{ asset('storage/' . $product->image) }}"
+                <img src="{{ Str::startsWith($product->image, 'http') 
+                        ? $product->image 
+                        : asset('storage/' . $product->image) }}"
                      alt="{{ $product->name }}"
                      class="w-full h-full object-cover"/>
             @else

@@ -19,16 +19,22 @@ class DatabaseSeeder extends Seeder
         // 2. Create 10 regular customers
         User::factory(10)->create();
 
-        // 3. Create 5 categories
-        Category::factory(5)->create();
+        // 3. Create fixed categories
+        $categories = ['Food', 'Shoes', 'Clothing', 'Accessories'];
+        foreach ($categories as $name) {
+            Category::firstOrCreate(
+                ['slug' => \Illuminate\Support\Str::slug($name)],
+                ['name' => $name]
+            );
+        }
 
-        // 4. Create 20 products (needs categories first)
+        // 4. Create 20 products
         Product::factory(20)->create();
 
-        // 5. Create 10 orders (needs users first)
+        // 5. Create 10 orders
         Order::factory(10)->create();
 
-        // 6. Create 30 order items (needs orders and products first)
+        // 6. Create 30 order items
         OrderItem::factory(30)->create();
     }
 }

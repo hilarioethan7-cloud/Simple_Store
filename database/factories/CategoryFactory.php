@@ -7,12 +7,19 @@ use Illuminate\Support\Str;
 
 class CategoryFactory extends Factory
 {
+    protected static array $categories = [
+        'Food', 'Shoes', 'Clothing', 'Accessories'
+    ];
+
+    protected static int $index = 0;
+
     public function definition(): array
     {
-        $name = fake()->unique()->words(2, true);
+        $name = self::$categories[self::$index % count(self::$categories)];
+        self::$index++;
 
         return [
-            'name' => ucfirst($name),
+            'name' => $name,
             'slug' => Str::slug($name),
         ];
     }
