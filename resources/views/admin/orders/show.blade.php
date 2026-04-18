@@ -1,78 +1,40 @@
-@extends('layouts.admin')
+@extends('layouts.app')
 
-@section('title', 'Order #' . $order->id)
+@section('title', $product->name)
 
 @section('content')
-    <div class="mb-6 flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-gray-800">Order #{{ $order->id }}</h2>
-        <a href="{{ route('admin.orders.index') }}"
-           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
-            Back to Orders
-        </a>
-    </div>
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow p-6 flex gap-8">
+            @if($product->image)
+                <img src="{{ Storage::url($product->image) }}"
+                     class="w-64 h-64 object-cover rounded-lg">
+            @else
+                <div class="w-64 h-64 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400">
+                    No Image
+                </div>
+            @endif
 
-    <div class="grid grid-cols-2 gap-6 mb-6">
-        <!-- Customer Info -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="font-semibold text-gray-700 mb-4">Customer Information</h3>
-            <p><span class="text-gray-500">Name:</span> {{ $order->name }}</p>
-            <p><span class="text-gray-500">Email:</span> {{ $order->email }}</p>
-            <p><span class="text-gray-500">Phone:</span> {{ $order->phone }}</p>
-            <p><span class="text-gray-500">Address:</span> {{ $order->address }}</p>
-        </div>
+            <div class="flex-1">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ $product->name }}</h1>
+                <p class="text-gray-500 mb-2">{{ $product->category->name }}</p>
+                <p class="text-3xl font-bold text-blue-600 mb-4">${{ number_format($product->price, 2) }}</p>
+                <p class="text-gray-600 mb-6">{{ $product->description }}</p>
 
-        <!-- Update Status -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="font-semibold text-gray-700 mb-4">Update Status</h3>
-            <form action="{{ route('admin.orders.update', $order) }}" method="POST">
-                @csrf
-                @method('PATCH')
-                <select name="status"
-                        class="w-full border border-gray-300 rounded-lg px-3 py-2 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    @foreach(['pending', 'processing', 'shipped', 'delivered', 'cancelled'] as $status)
-                        <option value="{{ $status }}" {{ $order->status === $status ? 'selected' : '' }}>
-                            {{ ucfirst($status) }}
-                        </option>
-                    @endforeach
-                </select>
-                <button type="submit"
-                        class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-                    Update Status
-                </button>
-            </form>
+                @if($product->stock > 0)
+                    <form action="{{ route('cart.add', $product) }}" method="POST" class="flex gap-3">
+                        @csrf
+                        <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}"
+                               class="w-20 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="submit"
+                                class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                            Add to Cart
+                        </button>
+                    </form>
+                    <p class="text-gray-400 text-sm mt-2">{{ $product->stock }} in stock</p>
+                @else
+                    <p class="text-red-500 font-semibold">Out of Stock</p>
+                @endif
+            </div>
         </div>
-    </div>
-
-    <!-- Order Items -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="p-6 border-b">
-            <h3 class="font-semibold text-gray-700">Order Items</h3>
-        </div>
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Product</th>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Price</th>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Quantity</th>
-                    <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Subtotal</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @foreach($order->orderItems as $item)
-                    <tr>
-                        <td class="px-6 py-4">{{ $item->product->name }}</td>
-                        <td class="px-6 py-4">${{ number_format($item->price, 2) }}</td>
-                        <td class="px-6 py-4">{{ $item->quantity }}</td>
-                        <td class="px-6 py-4">${{ number_format($item->price * $item->quantity, 2) }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-            <tfoot class="bg-gray-50">
-                <tr>
-                    <td colspan="3" class="px-6 py-4 text-right font-semibold">Total:</td>
-                    <td class="px-6 py-4 font-bold">${{ number_format($order->total_amount, 2) }}</td>
-                </tr>
-            </tfoot>
-        </table>
     </div>
 @endsection

@@ -5,6 +5,9 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -12,18 +15,42 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// Public product routes - no login needed
+Route::get('/products', [ProductController::class, 'index']) 
+    ->name('products.index');
+Route::get('/products/{product}', [ProductController::class, 'show'])
+    ->name('products.show');
+
 Route::middleware('auth')->group(function () {
     // Dashboard redirect based on role
     Route::get('/dashboard', function () {
         if (Auth::user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
-        return redirect('/');
+        return redirect()->route('products.index');
     })->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Cart routes
+    Route::get('/cart', [CartController::class, 'index'])
+        ->name('cart.index');
+    Route::post('/cart/add/{product}', [CartController::class, 'add'])
+        ->name('cart.add');
+    Route::patch('/cart/update/{productId}', [CartController::class, 'update'])
+        ->name('cart.update');
+    Route::delete('/cart/remove/{productId}', [CartController::class, 'remove'])
+        ->name('cart.remove');
+    Route::delete('/cart/clear', [CartController::class, 'clear'])
+        ->name('cart.clear');
+
+    // Order history routes
+    Route::get('/orders', [OrderController::class, 'index'])
+        ->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])
+        ->name('orders.show');
 });
 
 // Admin routes - protected by both auth and admin middleware
