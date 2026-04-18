@@ -5,17 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Mail\OrderPlaced;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class CheckoutController extends Controller
 {
-    // Show the checkout form
     public function index()
     {
         $cart = session()->get('cart', []);
 
-        // Redirect back to cart if it is empty
         if (empty($cart)) {
             return redirect()->route('cart.index')
                 ->with('error', 'Your cart is empty!');
@@ -26,7 +26,6 @@ class CheckoutController extends Controller
         return view('checkout.index', compact('cart', 'total'));
     }
 
-    // Process the order
     public function store(Request $request)
     {
         $cart = session()->get('cart', []);
@@ -36,7 +35,6 @@ class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty!');
         }
 
-        // Validate the checkout form
         $request->validate([
             'name'    => 'required|string|max:255',
             'email'   => 'required|email|max:255',
@@ -44,10 +42,8 @@ class CheckoutController extends Controller
             'address' => 'required|string|max:500',
         ]);
 
-        // Calculate total from cart
         $total = array_sum(array_column($cart, 'subtotal'));
 
-        // Create the order record
         $order = Order::create([
             'user_id'      => Auth::id(),
             'name'         => $request->name,
@@ -58,7 +54,6 @@ class CheckoutController extends Controller
             'status'       => 'pending',
         ]);
 
-        // Create order items and decrement stock
         foreach ($cart as $productId => $item) {
             OrderItem::create([
                 'order_id'   => $order->id,
@@ -67,24 +62,23 @@ class CheckoutController extends Controller
                 'price'      => $item['price'],
             ]);
 
-            // Reduce stock for each product ordered
             $product = Product::find($productId);
             if ($product) {
                 $product->decrement('stock', $item['quantity']);
             }
         }
 
-        // Clear the cart from the session
+        // Queue confirmation email
+        Mail::to($order->email)->queue(new OrderPlaced($order));
+
         session()->forget('cart');
 
         return redirect()->route('checkout.success', $order->id)
             ->with('success', 'Order placed successfully!');
     }
 
-    // Show the order confirmation page
     public function success(Order $order)
     {
-        // Make sure the order belongs to the logged in user
         if ($order->user_id !== Auth::id()) {
             abort(403);
         }
