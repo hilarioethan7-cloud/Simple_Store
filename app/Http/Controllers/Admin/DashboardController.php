@@ -12,27 +12,19 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $totalOrders = Order::count();
-        $totalProducts = Product::count();
-        $totalUsers = User::where('role', 'customer')->count();
-        $totalCategories = Category::count();
+        return view('admin.dashboard', [
+            // Stat cards
+            'totalRevenue'  => Order::where('status', '!=', 'cancelled')->sum('total_amount'),
+            'totalOrders'   => Order::count(),
+            'pendingOrders' => Order::where('status', 'pending')->count(),
+            'totalProducts' => Product::count(),
+            'lowStock'      => Product::where('stock', '<=', 5)->count(),
+            'totalUsers'    => User::where('role', 'customer')->count(),
 
-        $totalRevenue = Order::where('status', '!=', 'cancelled')
-            ->sum('total_amount');
-
-        $ordersByStatus = Order::selectRaw('status, count(*) as count')
-            ->groupBy('status')
-            ->pluck('count', 'status');
-
-        $recentOrders = Order::with('user')
-            ->latest()->take(5)->get();
-
-        $lowStockProducts = Product::where('stock', '<=', 5)->get();
-
-        return view('admin.dashboard', compact(
-            'totalOrders', 'totalProducts', 'totalUsers',
-            'totalCategories', 'totalRevenue', 'ordersByStatus',
-            'recentOrders', 'lowStockProducts'
-        ));
+            // Tables
+            'products'      => Product::with('category')->latest()->get(),
+            'orders'        => Order::with('user')->latest()->take(10)->get(),
+            'users'         => User::where('role', 'customer')->latest()->take(10)->get(),
+        ]);
     }
 }

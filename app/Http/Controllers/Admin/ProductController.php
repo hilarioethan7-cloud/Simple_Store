@@ -11,10 +11,16 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('category')->paginate(10);
-        return view('admin.products.index', compact('products'));
+        $categories = Category::all();
+
+        $products = Product::with('category')
+            ->when($request->search, fn($q) => $q->where('name', 'like', "%{$request->search}%"))
+            ->when($request->category, fn($q) => $q->where('category_id', $request->category))
+            ->paginate(10);
+
+        return view('admin.products.index', compact('products', 'categories'));
     }
 
     public function create()

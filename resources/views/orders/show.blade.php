@@ -1,98 +1,92 @@
-@extends('layouts.app')
+@extends('app')
 
-@section('title', 'Order #' . $order->id)
+@section('title', $order->orderItems->first()->product->name . ' - Simple Store')
 
 @section('content')
+@php $product = $order->orderItems->first()->product; @endphp
 <div class="space-y-6">
 
-    {{-- Back --}}
-    <a href="{{ route('orders.index') }}"
-       class="inline-flex items-center gap-1 text-sm text-gray-400 hover:text-gray-600 transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-        </svg>
-        Back to Orders
-    </a>
+    {{-- Breadcrumb --}}
+    <div class="flex items-center gap-2 text-sm text-gray-400">
+        <a href="{{ route('products.index') }}" class="hover:text-gray-600">Products</a>
+        <span>/</span>
+        <span class="text-gray-600">{{ $product->name }}</span>
+    </div>
 
-    <h1 class="text-2xl font-bold text-gray-800">Order #{{ $order->id }}</h1>
+    <div class="bg-white rounded-xl border border-gray-100 p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {{-- Product Image --}}
+        <div class="h-72 rounded-lg overflow-hidden bg-gray-50">
+            @if(!empty($product->image))
+                <img src="{{ asset('storage/' . $product->image) }}"
+                     alt="{{ $product->name }}"
+                     class="h-full w-full object-cover">
+            @else
+                <img src="https://placehold.co/600x400?text={{ urlencode($product->name) }}"
+                     alt="{{ $product->name }}"
+                     class="h-full w-full object-cover">
+            @endif
+        </div>
 
-        {{-- Order Info --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-6 space-y-3">
-            <h3 class="font-semibold text-gray-700">Order Information</h3>
-            <div class="text-sm text-gray-600 space-y-2">
-                <p><span class="text-gray-400">Status:</span>
-                    <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium
-                        {{ $order->status === 'delivered' ? 'bg-green-100 text-green-700' : '' }}
-                        {{ $order->status === 'cancelled' ? 'bg-red-100 text-red-700' : '' }}
-                        {{ $order->status === 'pending' ? 'bg-yellow-100 text-yellow-700' : '' }}
-                        {{ $order->status === 'processing' ? 'bg-blue-100 text-blue-700' : '' }}
-                        {{ $order->status === 'shipped' ? 'bg-purple-100 text-purple-700' : '' }}">
-                        {{ ucfirst($order->status) }}
-                    </span>
+        {{-- Product Details --}}
+        <div class="space-y-4">
+            <div>
+                <p class="text-xs text-gray-400 uppercase tracking-wide">
+                    {{ $product->category->name ?? 'Uncategorized' }}
                 </p>
-                <p><span class="text-gray-400">Date:</span> {{ $order->created_at->format('M d, Y') }}</p>
-                <p><span class="text-gray-400">Total:</span> ₱{{ number_format($order->total_amount, 2) }}</p>
+                <h1 class="text-2xl font-bold text-gray-800 mt-1">{{ $product->name }}</h1>
             </div>
-        </div>
 
-        {{-- Delivery Info --}}
-        <div class="bg-white rounded-xl border border-gray-100 p-6 space-y-3">
-            <h3 class="font-semibold text-gray-700">Delivery Information</h3>
-            <div class="text-sm text-gray-600 space-y-2">
-                <p><span class="text-gray-400">Name:</span> {{ $order->name }}</p>
-                <p><span class="text-gray-400">Email:</span> {{ $order->email }}</p>
-                <p><span class="text-gray-400">Phone:</span> {{ $order->phone }}</p>
-                <p><span class="text-gray-400">Address:</span> {{ $order->address }}</p>
+            <p class="text-2xl font-semibold text-blue-600">
+                ₱{{ number_format($product->price, 2) }}
+            </p>
+
+            <p class="text-sm text-gray-500 leading-relaxed">
+                {{ $product->description ?? 'No description available.' }}
+            </p>
+
+            <p class="text-sm text-gray-400">
+                Stock: <span class="font-medium text-gray-700">{{ $product->stock ?? 0 }}</span>
+            </p>
+
+            {{-- Order Info --}}
+            <div class="border-t border-gray-100 pt-4 space-y-1">
+                <p class="text-sm text-gray-400">
+                    Order: <span class="font-medium text-gray-700">#{{ $order->id }}</span>
+                </p>
+                <p class="text-sm text-gray-400">
+                    Quantity: <span class="font-medium text-gray-700">{{ $order->orderItems->first()->quantity }}</span>
+                </p>
+                <p class="text-sm text-gray-400">
+                    Date: <span class="font-medium text-gray-700">{{ $order->created_at->format('M d, Y') }}</span>
+                </p>
+                <p class="text-sm text-gray-400">
+                    Total: <span class="font-medium text-blue-600">₱{{ number_format($order->orderItems->first()->quantity * $product->price, 2) }}</span>
+                </p>
             </div>
-        </div>
-    </div>
 
-    {{-- Order Items --}}
-    <div class="bg-white rounded-xl border border-gray-100 overflow-hidden">
-        <div class="p-6 border-b border-gray-100">
-            <h3 class="font-semibold text-gray-700">Order Items</h3>
-        </div>
-        <table class="w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Product</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Price</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Qty</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">Subtotal</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-                @foreach($order->orderItems as $item)
-                    <tr>
-                        <td class="px-6 py-4 text-sm text-gray-800">
-                            {{ $item->product->name ?? 'Product unavailable' }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            ₱{{ number_format($item->price, 2) }}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-600">
-                            {{ $item->quantity }}
-                        </td>
-                        <td class="px-6 py-4 text-sm font-medium text-gray-800">
-                            ₱{{ number_format($item->price * $item->quantity, 2) }}
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-            <tfoot class="bg-gray-50">
-                <tr>
-                    <td colspan="3" class="px-6 py-4 text-right text-sm font-semibold text-gray-700">
-                        Total:
-                    </td>
-                    <td class="px-6 py-4 text-sm font-bold text-gray-900">
-                        ₱{{ number_format($order->total_amount, 2) }}
-                    </td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+            {{-- Add to Cart --}}
+            @auth
+                <form action="{{ route('cart.add', $product) }}" method="POST"
+                      class="flex items-center gap-3 pt-2">
+                    @csrf
+                    <input type="number" name="quantity" value="1" min="1"
+                           max="{{ $product->stock ?? 99 }}"
+                           class="w-20 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="submit"
+                            class="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                        Add to Cart
+                    </button>
+                </form>
+            @else
+                <a href="{{ route('login') }}"
+                   class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                    Login to Add to Cart
+                </a>
+            @endauth
 
+        </div>
+
+    </div>
 </div>
 @endsection

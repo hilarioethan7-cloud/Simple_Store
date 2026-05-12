@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
+use App\Http\Controllers\Admin\UserController as AdminUserController; // 👈 add this
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
@@ -16,14 +17,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Public product routes - no login needed
-Route::get('/products', [ProductController::class, 'index'])
-    ->name('products.index');
-Route::get('/products/{product}', [ProductController::class, 'show'])
-    ->name('products.show');
+Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{product}', [ProductController::class, 'show'])->name('products.show');
 
 Route::middleware('auth')->group(function () {
-    // Dashboard redirect based on role
     Route::get('/dashboard', function () {
         if (Auth::user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
@@ -35,55 +32,33 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Cart routes
-    Route::get('/cart', [CartController::class, 'index'])
-        ->name('cart.index');
-    Route::post('/cart/add/{product}', [CartController::class, 'add'])
-        ->name('cart.add');
-    Route::patch('/cart/update/{productId}', [CartController::class, 'update'])
-        ->name('cart.update');
-    Route::delete('/cart/remove/{productId}', [CartController::class, 'remove'])
-        ->name('cart.remove');
-    Route::delete('/cart/clear', [CartController::class, 'clear'])
-        ->name('cart.clear');
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add/{product}', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/cart/update/{productId}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/remove/{productId}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 
-    // Checkout routes
-    Route::get('/checkout', [CheckoutController::class, 'index'])
-        ->name('checkout.index');
-    Route::post('/checkout', [CheckoutController::class, 'store'])
-        ->name('checkout.store');
-    Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])
-        ->name('checkout.success');
+    Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::get('/checkout/success/{order}', [CheckoutController::class, 'success'])->name('checkout.success');
 
-    // Order history routes
-    Route::get('/orders', [OrderController::class, 'index'])
-        ->name('orders.index');
-    Route::get('/orders/{order}', [OrderController::class, 'show'])
-        ->name('orders.show');
+    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+    Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
 });
 
-// Admin routes - protected by both auth and admin middleware
 Route::middleware(['auth', 'admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
-        // Dashboard
-        Route::get('/dashboard', [DashboardController::class, 'index'])
-            ->name('dashboard');
-
-        // Categories - full resource CRUD
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::resource('categories', CategoryController::class);
-
-        // Products - full resource CRUD
         Route::resource('products', AdminProductController::class);
 
-        // Orders - view and update status only
-        Route::get('/orders', [AdminOrderController::class, 'index'])
-            ->name('orders.index');
-        Route::get('/orders/{order}', [AdminOrderController::class, 'show'])
-            ->name('orders.show');
-        Route::patch('/orders/{order}', [AdminOrderController::class, 'update'])
-            ->name('orders.update');
+        Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{order}', [AdminOrderController::class, 'show'])->name('orders.show');
+        Route::patch('/orders/{order}', [AdminOrderController::class, 'update'])->name('orders.update');
+
+        Route::get('/users', [AdminUserController::class, 'index'])->name('users.index'); // 👈 add this
     });
 
 require __DIR__.'/auth.php';

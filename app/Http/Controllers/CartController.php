@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    // Show the cart page
     public function index()
     {
         $cart = session()->get('cart', []);
@@ -16,22 +15,15 @@ class CartController extends Controller
         return view('cart.index', compact('cart', 'total'));
     }
 
-    // Add a product to the cart
     public function add(Request $request, Product $product)
     {
-        $request->validate([
-            'quantity' => 'required|integer|min:1',
-        ]);
-
         $cart = session()->get('cart', []);
-        $quantity = $request->quantity;
+        $quantity = max(1, (int) $request->input('quantity', 1));
 
-        // Check if product already in cart
         if (isset($cart[$product->id])) {
             $quantity += $cart[$product->id]['quantity'];
         }
 
-        // Validate against available stock
         if ($quantity > $product->stock) {
             return back()->with('error', 'Not enough stock available!');
         }
@@ -49,7 +41,6 @@ class CartController extends Controller
         return back()->with('success', 'Item added to cart!');
     }
 
-    // Update cart item quantity
     public function update(Request $request, $productId)
     {
         $request->validate([
@@ -68,7 +59,6 @@ class CartController extends Controller
         return back()->with('success', 'Cart updated!');
     }
 
-    // Remove one item from the cart
     public function remove($productId)
     {
         $cart = session()->get('cart', []);
@@ -78,7 +68,6 @@ class CartController extends Controller
         return back()->with('success', 'Item removed from cart!');
     }
 
-    // Clear the entire cart
     public function clear()
     {
         session()->forget('cart');
